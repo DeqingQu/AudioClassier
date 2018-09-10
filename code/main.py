@@ -40,6 +40,7 @@ def gen_spectrumgram(folder, filename):
     if not os.path.exists(directory):
         os.makedirs(directory)
     plt.savefig(directory + spec_filename, bbox_inches="tight")
+    plt.clf()
 
 
 def audio_seg(folder, filename, start, end, total):
