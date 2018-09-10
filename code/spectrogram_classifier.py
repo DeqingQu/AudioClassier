@@ -224,44 +224,44 @@ def run_training():
     coord.join(threads)
     sess.close()
 
-def get_one_image(img_dir):
-    image = Image.open(img_dir)
-    # Image.open()
-    # 好像一次只能打开一张图片，不能一次打开一个文件夹，这里大家可以去搜索一下
-    plt.imshow(image)
-    image = image.resize([208, 208])
-    image_arr = np.array(image)
-    return image_arr
-
-def test(test_file):
-    log_dir = 'log/'
-    image_arr = get_one_image(test_file)
-
-    with tf.Graph().as_default():
-        image = tf.cast(image_arr, tf.float32)
-        image = tf.image.per_image_standardization(image)
-        image = tf.reshape(image, [1,208, 208, 3])
-        print(image.shape)
-        p = inference(image,1,5)
-        logits = tf.nn.softmax(p)
-        x = tf.placeholder(tf.float32,shape = [208,208,3])
-        saver = tf.train.Saver()
-        with tf.Session() as sess:
-            ckpt = tf.train.get_checkpoint_state(log_dir)
-            if ckpt and ckpt.model_checkpoint_path:
-                global_step = ckpt.model_checkpoint_path.split('/')[-1].split('-')[-1]
-                saver.restore(sess, ckpt.model_checkpoint_path)
-                #调用saver.restore()函数，加载训练好的网络模型
-
-                print('Loading success')
-            else:
-                print('No checkpoint')
-            prediction = sess.run(logits, feed_dict={x: image_arr})
-            max_index = np.argmax(prediction)
-            print('预测的标签为：')
-            print(max_index)
-            print('预测的结果为：')
-            print(prediction)
+# def get_one_image(img_dir):
+#     image = Image.open(img_dir)
+#     # Image.open()
+#     # 好像一次只能打开一张图片，不能一次打开一个文件夹，这里大家可以去搜索一下
+#     plt.imshow(image)
+#     image = image.resize([208, 208])
+#     image_arr = np.array(image)
+#     return image_arr
+#
+# def test(test_file):
+#     log_dir = 'log/'
+#     image_arr = get_one_image(test_file)
+#
+#     with tf.Graph().as_default():
+#         image = tf.cast(image_arr, tf.float32)
+#         image = tf.image.per_image_standardization(image)
+#         image = tf.reshape(image, [1,208, 208, 3])
+#         print(image.shape)
+#         p = inference(image,1,5)
+#         logits = tf.nn.softmax(p)
+#         x = tf.placeholder(tf.float32,shape = [208,208,3])
+#         saver = tf.train.Saver()
+#         with tf.Session() as sess:
+#             ckpt = tf.train.get_checkpoint_state(log_dir)
+#             if ckpt and ckpt.model_checkpoint_path:
+#                 global_step = ckpt.model_checkpoint_path.split('/')[-1].split('-')[-1]
+#                 saver.restore(sess, ckpt.model_checkpoint_path)
+#                 #调用saver.restore()函数，加载训练好的网络模型
+#
+#                 print('Loading success')
+#             else:
+#                 print('No checkpoint')
+#             prediction = sess.run(logits, feed_dict={x: image_arr})
+#             max_index = np.argmax(prediction)
+#             print('预测的标签为：')
+#             print(max_index)
+#             print('预测的结果为：')
+#             print(prediction)
 
 
 run_training()
