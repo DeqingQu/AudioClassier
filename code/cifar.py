@@ -4,8 +4,6 @@ import pickle
 import json
 import os
 
-#定义一些预处理函数
-
 def flatten_tf_array(array):
     shape = array.get_shape().as_list()
     return tf.reshape(array, [shape[0], shape[1] * shape[2] * shape[3]])
@@ -36,7 +34,7 @@ c10_image_height = 32
 c10_image_width = 32
 c10_image_depth = 3
 c10_num_labels = 10
-c10_image_size = 32  # Ahmet Taspinar的代码缺少了这一语句
+c10_image_size = 32
 
 with open(cifar10_folder + test_dataset[0], 'rb') as f0:
     c10_test_dict = pickle.load(f0, encoding='bytes')
@@ -60,9 +58,9 @@ train_dataset_cifar10, train_labels_cifar10 = reformat_data(c10_train_dataset, c
 del c10_train_dataset
 del c10_train_labels
 
-print("训练集包含以下标签: {}".format(np.unique(c10_train_dict[b'labels'])))
-print('训练集维度', train_dataset_cifar10.shape, train_labels_cifar10.shape)
-print('测试集维度', test_dataset_cifar10.shape, test_labels_cifar10.shape)
+print("Training set lable numbers: {}".format(np.unique(c10_train_dict[b'labels'])))
+print('Training set shape: ', train_dataset_cifar10.shape, train_labels_cifar10.shape)
+print('Test set shape: ', test_dataset_cifar10.shape, test_labels_cifar10.shape)
 
 LENET5_LIKE_BATCH_SIZE = 32
 LENET5_LIKE_FILTER_SIZE = 5
@@ -118,13 +116,12 @@ def model_lenet5_like(data, variables):
     return logits
 
 
-#Variables used in the constructing and running the graph
+# Variables used in the constructing and running the graph
 num_steps = 10001
 display_step = 1000
 learning_rate = 0.001
 batch_size = 16
 
-#定义数据的基本信息，传入变量
 image_width = 32
 image_height = 32
 image_depth = 3
@@ -138,37 +135,28 @@ train_labels = train_labels_cifar10
 
 graph = tf.Graph()
 with graph.as_default():
-    #1 首先使用占位符定义数据变量的维度
     tf_train_dataset = tf.placeholder(tf.float32, shape=(batch_size, image_width, image_height, image_depth))
     tf_train_labels = tf.placeholder(tf.float32, shape = (batch_size, num_labels))
     tf_test_dataset = tf.constant(test_dataset, tf.float32)
 
-    #2 然后初始化权重矩阵和偏置向量
     variables = variables_lenet5_like(image_width = image_width, image_height=image_height, image_depth = image_depth, num_labels = num_labels)
 
-
-    #3 使用模型计算分类
     logits = model_lenet5_like(tf_train_dataset, variables)
 
-    #4 使用带softmax的交叉熵函数计算预测标签和真实标签之间的损失函数
     loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=tf_train_labels))
 
-    #5  采用Adam优化算法优化上一步定义的损失函数，给定学习率
     optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(loss)
 
-    # 执行预测推断
     train_prediction = tf.nn.softmax(logits)
     test_prediction = tf.nn.softmax(model_lenet5_like(tf_test_dataset, variables))
 
 with tf.Session(graph=graph) as session:
-    # 初始化全部变量
     tf.global_variables_initializer().run()
     print('Initialized with learning_rate', learning_rate)
     for step in range(num_steps):
         offset = (step * batch_size) % (train_labels.shape[0] - batch_size)
         batch_data = train_dataset[offset:(offset + batch_size), :, :, :]
         batch_labels = train_labels[offset:(offset + batch_size), :]
-        # 在每一次批量中，获取当前的训练数据，并传入feed_dict以馈送到占位符中
         feed_dict = {tf_train_dataset: batch_data, tf_train_labels: batch_labels}
         _, l, predictions = session.run([optimizer, loss, train_prediction], feed_dict=feed_dict)
         train_accuracy = accuracy(predictions, batch_labels)
