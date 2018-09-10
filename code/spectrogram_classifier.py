@@ -2,7 +2,7 @@ import tensorflow as tf
 import numpy as np
 import os
 import matplotlib.pyplot as plt
-from PIL import Image
+# from PIL import Image
 
 
 def get_files(filepath):
