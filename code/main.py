@@ -35,7 +35,11 @@ def gen_spectrumgram(folder, filename):
     frame.axes.get_yaxis().set_visible(False)
     frame.axes.get_xaxis().set_visible(False)
 
-    plt.savefig(folder + spec_filename, bbox_inches="tight")
+    #   check directory is existed
+    directory = folder + 'specgram/'
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+    plt.savefig(directory + spec_filename, bbox_inches="tight")
 
 
 def audio_seg(folder, filename, start, end, total):

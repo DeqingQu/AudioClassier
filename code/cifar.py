@@ -3,6 +3,8 @@ import numpy as np
 import pickle
 import json
 import os
+import matplotlib.pyplot as plt
+
 
 def flatten_tf_array(array):
     shape = array.get_shape().as_list()
@@ -25,7 +27,6 @@ def reformat_data(dataset, labels, image_width, image_height, image_depth):
     np_labels_ = one_hot_encode(np.array(labels, dtype=np.float32))
     np_dataset, np_labels = randomize(np_dataset_, np_labels_)
     return np_dataset, np_labels
-
 
 cifar10_folder = './data/cifar10/'
 train_datasets = ['data_batch_1', 'data_batch_2', 'data_batch_3', 'data_batch_4', 'data_batch_5', ]
@@ -61,6 +62,8 @@ del c10_train_labels
 print("Training set lable numbers: {}".format(np.unique(c10_train_dict[b'labels'])))
 print('Training set shape: ', train_dataset_cifar10.shape, train_labels_cifar10.shape)
 print('Test set shape: ', test_dataset_cifar10.shape, test_labels_cifar10.shape)
+
+exit()
 
 LENET5_LIKE_BATCH_SIZE = 32
 LENET5_LIKE_FILTER_SIZE = 5
