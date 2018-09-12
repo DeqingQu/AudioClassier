@@ -5,35 +5,55 @@ import matplotlib.pyplot as plt
 # from PIL import Image
 
 
-def get_files(filepath):
-    files = []
-    labels = []
+def get_files(filepath, train_ratio=0.8):
+    train_files = []
+    train_labels = []
+    test_files = []
+    test_labels = []
 
     foldernames = os.listdir(filepath)
     for folder in foldernames:
         directory = filepath + folder + "/result/specgram/"
         filenames = os.listdir(directory)
-        for filename in filenames:
-            files.append(directory + filename)
-            label = filename[4]
-            if label == 'z':
-                label = 0
+        num_train_files = len(filenames) * train_ratio
+        for i, filename in enumerate(filenames):
+            if i < num_train_files:
+                train_files.append(directory + filename)
+                label = filename[4]
+                if label == 'z':
+                    label = 0
+                else:
+                    label = int(label)
+                train_labels.append(label)
             else:
-                label = int(label)
-            labels.append(label)
+                test_files.append(directory + filename)
+                label = filename[4]
+                if label == 'z':
+                    label = 0
+                else:
+                    label = int(label)
+                test_labels.append(label)
 
-    image_list = np.hstack((files))
-    label_list = np.hstack((labels))
+    train_image_list = np.hstack((train_files))
+    train_label_list = np.hstack((train_labels))
+    test_image_list = np.hstack((test_files))
+    test_label_list = np.hstack((test_labels))
 
-    temp = np.array([image_list, label_list])
-    temp = temp.transpose()
-    np.random.shuffle(temp)
+    train_temp = np.array([train_image_list, train_label_list])
+    train_temp = train_temp.transpose()
+    np.random.shuffle(train_temp)
+    test_temp = np.array([test_image_list, test_label_list])
+    test_temp = test_temp.transpose()
+    np.random.shuffle(test_temp)
 
-    image_list = list(temp[:, 0])
-    label_list = list(temp[:, 1])
-    label_list = [int(i) for i in label_list]
+    train_image_list = list(train_temp[:, 0])
+    train_label_list = list(train_temp[:, 1])
+    train_label_list = [int(i) for i in train_label_list]
+    test_image_list = list(test_temp[:, 0])
+    test_label_list = list(test_temp[:, 1])
+    test_label_list = [int(i) for i in test_label_list]
 
-    return image_list, label_list
+    return train_image_list, train_label_list, test_image_list, test_label_list
 
 
 def get_batch(image,label,image_W,image_H,batch_size,capacity=32):
@@ -50,7 +70,7 @@ def get_batch(image,label,image_W,image_H,batch_size,capacity=32):
 
     image = tf.image.per_image_standardization(image)
 
-    image_batch,label_batch = tf.train.batch([image,label],batch_size = batch_size,num_threads=16,capacity = capacity)
+    image_batch,label_batch = tf.train.batch([image,label],batch_size=batch_size,num_threads=16,capacity = capacity)
 
     label_batch = tf.reshape(label_batch,[batch_size])
     return image_batch,label_batch
@@ -168,7 +188,7 @@ N_CLASSES = 10
 IMG_W = 523
 IMG_H = 396
 #设置图片的size
-BATCH_SIZE = 5
+BATCH_SIZE = 16
 CAPACITY = 64
 MAX_STEP = 1000
 #迭代一千次，如果机器配置好的话，建议至少10000次以上
@@ -177,17 +197,17 @@ learning_rate = 0.0001
 
 
 def run_training():
-    train_dir = "../train/"
+    train_dir = "../temp/"
     test_dir = "../test/"
     logs_train_dir = 'log/'
     #存放一些模型文件的目录
-    train,train_label = get_files(train_dir)
-    train_batch,train_label_batch = get_batch(train,train_label,
+    train, train_label, test, test_label = get_files(train_dir, 0.8)
+    train_batch, train_label_batch = get_batch(train, train_label,
                                                          IMG_W,
                                                          IMG_H,
                                                          BATCH_SIZE,
                                                          CAPACITY)
-    test, test_label = get_files(test_dir)
+    # test, test_label = get_files(test_dir)
     test_batch, test_label_batch = get_batch(test, test_label,
                                                IMG_W,
                                                IMG_H,
