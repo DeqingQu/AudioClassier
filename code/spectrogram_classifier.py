@@ -156,6 +156,8 @@ def inference(images, batch_size, n_classes):
                                  dtype=tf.float32,
                                  initializer=tf.constant_initializer(0.1))
         softmax_linear = tf.add(tf.matmul(fc2, weights), biases, name="softmax_linear")
+
+    print(tf.shape(softmax_linear[0]))
     return softmax_linear
 
 
@@ -188,11 +190,11 @@ N_CLASSES = 10
 IMG_W = 523
 IMG_H = 396
 #设置图片的size
-BATCH_SIZE = 16
+BATCH_SIZE = 128
 CAPACITY = 64
-MAX_STEP = 1000
+MAX_STEP = 2000
 #迭代一千次，如果机器配置好的话，建议至少10000次以上
-learning_rate = 0.0001
+learning_rate = 0.005
 #学习率
 
 
