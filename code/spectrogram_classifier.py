@@ -189,7 +189,7 @@ def evaluation(logits, labels):
 N_CLASSES = 10
 IMG_W = 523
 IMG_H = 396
-BATCH_SIZE = 1
+BATCH_SIZE = 128
 CAPACITY = 64
 MAX_STEP = 2000
 learning_rate = 0.005
