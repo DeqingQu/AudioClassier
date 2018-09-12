@@ -109,3 +109,6 @@ venv.bak/
 
 # wav files
 *.wav
+
+# log folder
+code/log/

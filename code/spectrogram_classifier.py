@@ -58,7 +58,7 @@ def get_batch(image,label,image_W,image_H,batch_size,capacity=32):
 
 def inference(images, batch_size, n_classes):
     # conv1, shape = [kernel_size, kernel_size, channels, kernel_numbers]
-    with tf.variable_scope("conv1") as scope:
+    with tf.variable_scope("conv1", reuse=tf.AUTO_REUSE) as scope:
         weights = tf.get_variable("weights",
                                   shape=[3, 3, 3, 16],
                                   dtype=tf.float32,
@@ -72,14 +72,14 @@ def inference(images, batch_size, n_classes):
         conv1 = tf.nn.relu(pre_activation, name="conv1")
 
     # pool1 && norm1
-    with tf.variable_scope("pooling1_lrn") as scope:
+    with tf.variable_scope("pooling1_lrn", reuse=tf.AUTO_REUSE) as scope:
         pool1 = tf.nn.max_pool(conv1, ksize=[1, 3, 3, 1], strides=[1, 2, 2, 1],
                                padding="SAME", name="pooling1")
         norm1 = tf.nn.lrn(pool1, depth_radius=4, bias=1.0, alpha=0.001/9.0,
                           beta=0.75, name='norm1')
 
     # conv2
-    with tf.variable_scope("conv2") as scope:
+    with tf.variable_scope("conv2", reuse=tf.AUTO_REUSE) as scope:
         weights = tf.get_variable("weights",
                                   shape=[3, 3, 16, 16],
                                   dtype=tf.float32,
@@ -93,14 +93,14 @@ def inference(images, batch_size, n_classes):
         conv2 = tf.nn.relu(pre_activation, name="conv2")
 
     # pool2 && norm2
-    with tf.variable_scope("pooling2_lrn") as scope:
+    with tf.variable_scope("pooling2_lrn", reuse=tf.AUTO_REUSE) as scope:
         pool2 = tf.nn.max_pool(conv2, ksize=[1, 3, 3, 1], strides=[1, 2, 2, 1],
                                padding="SAME", name="pooling2")
         norm2 = tf.nn.lrn(pool2, depth_radius=4, bias=1.0, alpha=0.001/9.0,
                           beta=0.75, name='norm2')
 
     # full-connect1
-    with tf.variable_scope("fc1") as scope:
+    with tf.variable_scope("fc1", reuse=tf.AUTO_REUSE) as scope:
         reshape = tf.reshape(norm2, shape=[batch_size, -1])
         dim = reshape.get_shape()[1].value
         weights = tf.get_variable("weights",
@@ -114,7 +114,7 @@ def inference(images, batch_size, n_classes):
         fc1 = tf.nn.relu(tf.matmul(reshape, weights) + biases, name="fc1")
 
     # full_connect2
-    with tf.variable_scope("fc2") as scope:
+    with tf.variable_scope("fc2", reuse=tf.AUTO_REUSE) as scope:
         weights = tf.get_variable("weights",
                                   shape=[128, 128],
                                   dtype=tf.float32,
@@ -126,7 +126,7 @@ def inference(images, batch_size, n_classes):
         fc2 = tf.nn.relu(tf.matmul(fc1, weights) + biases, name="fc2")
 
     # softmax
-    with tf.variable_scope("softmax_linear") as scope:
+    with tf.variable_scope("softmax_linear", reuse=tf.AUTO_REUSE) as scope:
         weights = tf.get_variable("weights",
                                   shape=[128, n_classes],
                                   dtype=tf.float32,
@@ -177,7 +177,8 @@ learning_rate = 0.0001
 
 
 def run_training():
-    train_dir = "../dataset/"
+    train_dir = "../train/"
+    test_dir = "../test/"
     logs_train_dir = 'log/'
     #存放一些模型文件的目录
     train,train_label = get_files(train_dir)
@@ -186,10 +187,19 @@ def run_training():
                                                          IMG_H,
                                                          BATCH_SIZE,
                                                          CAPACITY)
+    test, test_label = get_files(test_dir)
+    test_batch, test_label_batch = get_batch(test, test_label,
+                                               IMG_W,
+                                               IMG_H,
+                                               BATCH_SIZE,
+                                               CAPACITY)
+
     train_logits =inference(train_batch,BATCH_SIZE,N_CLASSES)
     train_loss = losses(train_logits,train_label_batch)
     train_op = trainning(train_loss,learning_rate)
     train_acc = evaluation(train_logits,train_label_batch)
+    test_logits = inference(test_batch, BATCH_SIZE, N_CLASSES)
+    test_acc = evaluation(test_logits, test_label_batch)
 
     summary_op = tf.summary.merge_all()
     sess = tf.Session()
@@ -204,9 +214,9 @@ def run_training():
         for step in np.arange(MAX_STEP):
             if coord.should_stop():
                 break
-            _,tra_loss, tra_acc = sess.run([train_op, train_loss, train_acc])
+            _,tra_loss, tra_acc, tes_acc = sess.run([train_op, train_loss, train_acc, test_acc])
             if step % 50 == 0:
-                print('Step %d,train loss = %.2f,train accuracy = %.2f%%' % (step, tra_loss, tra_acc*100.0))
+                print('Step %d,train loss = %.2f,train accuracy = %.2f%%,test accuracy = %.2f%%' % (step, tra_loss, tra_acc*100.0, tes_acc*100.0))
                 #每迭代50次，打印出一次结果
                 summary_str = sess.run(summary_op)
                 train_writer.add_summary(summary_str,step)
