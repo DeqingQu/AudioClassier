@@ -240,10 +240,10 @@ def run_training():
                 summary_str = sess.run(summary_op)
                 train_writer.add_summary(summary_str,step)
 
-            if step % 200 ==0 or (step +1) == MAX_STEP:
-                # save the network every 200 steps
-                checkpoint_path = os.path.join(logs_train_dir,'model.ckpt')
-                saver.save(sess,checkpoint_path,global_step = step)
+            # if step % 200 ==0 or (step +1) == MAX_STEP:
+            #     # save the network every 200 steps
+            #     checkpoint_path = os.path.join(logs_train_dir,'model.ckpt')
+            #     saver.save(sess,checkpoint_path,global_step = step)
 
     except tf.errors.OutOfRangeError:
         print('Done training epoch limit reached')
