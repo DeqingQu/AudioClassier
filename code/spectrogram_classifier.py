@@ -1,9 +1,9 @@
 import tensorflow as tf
 import numpy as np
 import os
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 # from PIL import Image
-
+import time
 
 def get_files(filepath, train_ratio=0.8):
     train_files = []
@@ -157,7 +157,6 @@ def inference(images, batch_size, n_classes):
                                  initializer=tf.constant_initializer(0.1))
         softmax_linear = tf.add(tf.matmul(fc2, weights), biases, name="softmax_linear")
 
-    print(tf.shape(softmax_linear[0]))
     return softmax_linear
 
 
@@ -186,24 +185,20 @@ def evaluation(logits, labels):
         tf.summary.scalar(scope.name + "accuracy", accuracy)
     return accuracy
 
+
 N_CLASSES = 10
 IMG_W = 523
 IMG_H = 396
-#设置图片的size
-BATCH_SIZE = 128
+BATCH_SIZE = 1
 CAPACITY = 64
 MAX_STEP = 2000
-#迭代一千次，如果机器配置好的话，建议至少10000次以上
 learning_rate = 0.005
-#学习率
 
 
 def run_training():
-    train_dir = "../temp/"
-    test_dir = "../test/"
+    data_dir = "../temp/"
     logs_train_dir = 'log/'
-    #存放一些模型文件的目录
-    train, train_label, test, test_label = get_files(train_dir, 0.8)
+    train, train_label, test, test_label = get_files(data_dir, 0.8)
     train_batch, train_label_batch = get_batch(train, train_label,
                                                          IMG_W,
                                                          IMG_H,
@@ -216,7 +211,7 @@ def run_training():
                                                BATCH_SIZE,
                                                CAPACITY)
 
-    train_logits =inference(train_batch,BATCH_SIZE,N_CLASSES)
+    train_logits = inference(train_batch,BATCH_SIZE,N_CLASSES)
     train_loss = losses(train_logits,train_label_batch)
     train_op = trainning(train_loss,learning_rate)
     train_acc = evaluation(train_logits,train_label_batch)
@@ -233,20 +228,22 @@ def run_training():
     threads = tf.train.start_queue_runners(sess = sess,coord = coord)
 
     try:
+        start = time.time()
         for step in np.arange(MAX_STEP):
             if coord.should_stop():
                 break
             _,tra_loss, tra_acc, tes_acc = sess.run([train_op, train_loss, train_acc, test_acc])
-            if step % 50 == 0:
+            if step % 50 == 0 or step == MAX_STEP-1:
+                # print the result every 50 steps
                 print('Step %d,train loss = %.6f,train accuracy = %.2f%%,test accuracy = %.2f%%' % (step, tra_loss, tra_acc*100.0, tes_acc*100.0))
-                #每迭代50次，打印出一次结果
+                print("elapsed time = %.2f s" % (time.time() - start))
                 summary_str = sess.run(summary_op)
                 train_writer.add_summary(summary_str,step)
 
             if step % 200 ==0 or (step +1) == MAX_STEP:
+                # save the network every 200 steps
                 checkpoint_path = os.path.join(logs_train_dir,'model.ckpt')
                 saver.save(sess,checkpoint_path,global_step = step)
-                #每迭代200次，利用saver.save()保存一次模型文件，以便测试的时候使用
 
     except tf.errors.OutOfRangeError:
         print('Done training epoch limit reached')
