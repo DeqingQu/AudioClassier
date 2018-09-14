@@ -1,17 +1,4 @@
 from pydub import AudioSegment
-#
-# filename = "bbae8p"
-# myaudio = AudioSegment.from_file("../dataset/s7/" + filename + ".wav", "wav")
-# a_len = len(myaudio)
-# print(a_len)
-# start = int(a_len * 35750 / 74500)
-# print(start)
-# end = int(a_len * 43000 / 74500)
-# print(end)
-# word = myaudio[start:end]
-# word.export(filename + "_w.wav", format="wav")
-
-
 import os
 import librosa
 import matplotlib.pyplot as plt
