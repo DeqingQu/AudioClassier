@@ -7,7 +7,7 @@ segment audio recording files and generate spectrograms:
 ```
 python3 code/main.py
 ```
-spectrograms classification with CNN:
+classify spectrograms with CNN:
 ```
 python3 code/spectrogram_classifier.py
 ```
